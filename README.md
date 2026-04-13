@@ -1,14 +1,6 @@
 # Cybersecurity Tools Web App
 
-A Flask-based cybersecurity tools dashboard with a retro terminal interface. It was built as a local-first security toolkit and can be deployed publicly through Render or on a Linux server with Gunicorn and Nginx.
-
-## Live Demo
-
-Add the Render URL here after deployment:
-
-```text
-https://your-render-app-name.onrender.com
-```
+A Flask-based cybersecurity tools dashboard with a retro terminal interface. It was built as a local-first security toolkit with a production-style deployment path using Gunicorn and Nginx.
 
 ## Features
 
@@ -41,14 +33,12 @@ app/
   tools/
 deploy/
   DEPLOYMENT.md
-  RENDER.md
   gunicorn.conf.py
   gunicorn.service
   nginx.conf
   nginx-wsl-local.conf
 samples/
 tests/
-render.yaml
 requirements.txt
 README.md
 ```
@@ -122,36 +112,6 @@ Open:
 ```text
 http://127.0.0.1:8080
 ```
-
-## Free Public Deployment With Render
-
-This repo includes `render.yaml`, so Render can deploy the app directly from GitHub.
-
-1. Go to Render.
-2. Create a new Blueprint or Web Service from this repository.
-3. Use the free plan.
-4. Let Render detect `render.yaml`.
-5. Deploy.
-
-Render runs:
-
-```bash
-gunicorn -w 3 -b 0.0.0.0:$PORT app.app:app
-```
-
-Health check:
-
-```text
-/health
-```
-
-Public scanner safety is enabled in `render.yaml`:
-
-```text
-SCANNER_ALLOWED_HOSTS=127.0.0.1,localhost,::1
-```
-
-That prevents the hosted demo from being used to scan arbitrary internet hosts.
 
 ## Linux Server Deployment
 
@@ -245,7 +205,7 @@ Leave it unset during trusted local development if you need to scan another appr
 
 ## Future Improvements
 
-- Add screenshots after the Render URL is live.
+- Add screenshots or a short deployment demo.
 - Add export buttons for scan and parser reports.
 - Add authentication before exposing private/internal tools.
 - Add rate limiting before heavier public use.
