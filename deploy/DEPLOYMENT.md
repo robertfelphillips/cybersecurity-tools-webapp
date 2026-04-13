@@ -17,6 +17,27 @@ python3 -m venv .venv
 pip install -r requirements.txt
 ```
 
+## WSL Local Production Check
+
+From Windows, open a WSL terminal and run:
+
+```bash
+cd /mnt/c/Users/rober/OneDrive/Documents/Playground/cybersecurity-tools-webapp
+python3 -m venv .venv-linux
+. .venv-linux/bin/activate
+pip install -r requirements.txt
+python -m unittest discover -s tests
+gunicorn -w 3 -b 127.0.0.1:8000 app.app:app
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000
+```
+
+This confirms the app runs through Gunicorn before moving to Nginx.
+
 ## Gunicorn
 
 Copy the service file:
