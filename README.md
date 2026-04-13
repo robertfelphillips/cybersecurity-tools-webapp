@@ -8,6 +8,7 @@ A Flask-based cybersecurity tools platform with a retro terminal interface. The 
 - Base64 encoder/decoder with invalid-input handling.
 - Controlled port scanner with permission confirmation and a 100-port scan limit.
 - Log parser for IP extraction, HTTP status counts, failed-login detection, and suspicious event summaries.
+- Production health check at `/health`.
 
 ## Project Structure
 
@@ -49,6 +50,7 @@ http://127.0.0.1:5000
 /base64        Base64 encoder/decoder
 /port-scanner  Controlled port scanner
 /log-parser    Log parser
+/health        JSON health check
 ```
 
 ## Manual Test Checklist
@@ -81,6 +83,7 @@ Log parser:
 
 ```text
 Use samples/sample-auth.log or samples/sample-web.log.
+You can paste log text or upload a .log/.txt file up to 1 MB.
 ```
 
 ## Automated Tests
@@ -97,8 +100,9 @@ The tests cover:
 - Base64 encoding/decoding
 - Invalid Base64 handling
 - Port scanner validation and mocked open/closed ports
-- Log parser counts and summaries
+- Log parser counts, summaries, and file uploads
 - Flask route availability
+- Health check response
 
 ## Safety Notes
 
@@ -121,7 +125,7 @@ pip install -r requirements.txt
 Run with Gunicorn:
 
 ```bash
-gunicorn -w 3 -b 127.0.0.1:8000 app.app:app
+gunicorn -c deploy/gunicorn.conf.py app.app:app
 ```
 
 Example Nginx reverse proxy:
@@ -141,9 +145,18 @@ server {
 }
 ```
 
+Full deployment files are in `deploy/`:
+
+```text
+deploy/DEPLOYMENT.md
+deploy/gunicorn.conf.py
+deploy/gunicorn.service
+deploy/nginx.conf
+deploy/nginx-wsl-local.conf
+```
+
 ## Future Improvements
 
-- Add file upload support for log parsing.
 - Add export buttons for scan and parser reports.
 - Add authentication before exposing the app on a public server.
 - Add rate limiting before public deployment.

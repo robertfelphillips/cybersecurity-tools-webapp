@@ -100,6 +100,11 @@ class RouteTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(self.client.get(path).status_code, 200)
 
+    def test_health_check(self):
+        response = self.client.get("/health")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"status": "ok"})
+
     def test_hash_post(self):
         response = self.client.post("/", data={"input_text": "hello", "algorithm": "sha256"})
         self.assertEqual(response.status_code, 200)

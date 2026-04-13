@@ -25,6 +25,11 @@ def handle_file_too_large(_):
     )
 
 
+@app.route("/health")
+def health_check():
+    return {"status": "ok"}
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     digest = None
