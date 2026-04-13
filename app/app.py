@@ -1,12 +1,28 @@
 from flask import Flask, render_template, request
+from werkzeug.exceptions import RequestEntityTooLarge
 
 from app.tools.base64_tool import decode_base64, encode_base64
 from app.tools.hash_generator import SUPPORTED_ALGORITHMS, generate_hash
-from app.tools.log_parser import parse_logs
+from app.tools.log_parser import MAX_LOG_UPLOAD_BYTES, parse_logs, read_log_upload
 from app.tools.port_scanner import MAX_PORT_RANGE, scan_ports
 
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = MAX_LOG_UPLOAD_BYTES
+
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(_):
+    return (
+        render_template(
+            "log_parser.html",
+            log_text="",
+            uploaded_filename=None,
+            report=None,
+            error="Uploaded log file must be 1 MB or smaller.",
+        ),
+        413,
+    )
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -68,13 +84,20 @@ def base64_tool():
 @app.route("/log-parser", methods=["GET", "POST"])
 def log_parser():
     log_text = ""
+    uploaded_filename = None
     report = None
     error = None
 
     if request.method == "POST":
-        log_text = request.form.get("log_text", "")
+        uploaded_file = request.files.get("log_file")
 
         try:
+            if uploaded_file and uploaded_file.filename:
+                uploaded_filename = uploaded_file.filename
+                log_text = read_log_upload(uploaded_file)
+            else:
+                log_text = request.form.get("log_text", "")
+
             report = parse_logs(log_text)
         except ValueError as exc:
             error = str(exc)
@@ -82,6 +105,7 @@ def log_parser():
     return render_template(
         "log_parser.html",
         log_text=log_text,
+        uploaded_filename=uploaded_filename,
         report=report,
         error=error,
     )

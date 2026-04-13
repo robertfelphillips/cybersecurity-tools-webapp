@@ -3,6 +3,8 @@ import re
 from collections import Counter
 
 
+ALLOWED_LOG_EXTENSIONS = {".log", ".txt"}
+MAX_LOG_UPLOAD_BYTES = 1_000_000
 IP_PATTERN = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 FAILED_LOGIN_PATTERN = re.compile(
     r"\b(failed password|authentication failure|invalid user|login failed|failed login)\b",
@@ -12,6 +14,21 @@ ERROR_PATTERN = re.compile(r"\b(error|exception|critical|fatal|denied)\b", re.IG
 WARNING_PATTERN = re.compile(r"\b(warn|warning|timeout|refused|blocked)\b", re.IGNORECASE)
 HTTP_STATUS_PATTERN = re.compile(r'"\s(?P<status>[1-5]\d{2})\s')
 MAX_MATCHES = 25
+
+
+def read_log_upload(uploaded_file) -> str:
+    filename = uploaded_file.filename or ""
+    if not _is_allowed_log_file(filename):
+        raise ValueError("Upload a .log or .txt file.")
+
+    contents = uploaded_file.read(MAX_LOG_UPLOAD_BYTES + 1)
+    if len(contents) > MAX_LOG_UPLOAD_BYTES:
+        raise ValueError("Uploaded log file must be 1 MB or smaller.")
+
+    try:
+        return contents.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise ValueError("Uploaded log file must be UTF-8 text.") from exc
 
 
 def parse_logs(log_text: str) -> dict[str, object]:
@@ -104,3 +121,7 @@ def _ip_scope(ip: str) -> str:
         return "reserved"
 
     return "public"
+
+
+def _is_allowed_log_file(filename: str) -> bool:
+    return any(filename.lower().endswith(extension) for extension in ALLOWED_LOG_EXTENSIONS)

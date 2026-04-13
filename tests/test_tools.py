@@ -1,3 +1,4 @@
+import io
 import socket
 import unittest
 from unittest.mock import patch
@@ -5,7 +6,7 @@ from unittest.mock import patch
 from app.app import app
 from app.tools.base64_tool import decode_base64, encode_base64
 from app.tools.hash_generator import generate_hash
-from app.tools.log_parser import parse_logs
+from app.tools.log_parser import read_log_upload, parse_logs
 from app.tools.port_scanner import scan_ports
 
 
@@ -47,6 +48,25 @@ class ToolTests(unittest.TestCase):
     def test_log_parser_requires_text(self):
         with self.assertRaises(ValueError):
             parse_logs("")
+
+    def test_log_upload_reads_text_files(self):
+        class UploadedFile:
+            filename = "auth.log"
+
+            def read(self, _):
+                return b"Failed password from 192.168.1.25"
+
+        self.assertEqual(read_log_upload(UploadedFile()), "Failed password from 192.168.1.25")
+
+    def test_log_upload_rejects_unknown_extensions(self):
+        class UploadedFile:
+            filename = "auth.csv"
+
+            def read(self, _):
+                return b""
+
+        with self.assertRaises(ValueError):
+            read_log_upload(UploadedFile())
 
     @patch("app.tools.port_scanner.socket.getaddrinfo", return_value=[object()])
     @patch("app.tools.port_scanner.socket.create_connection")
@@ -96,6 +116,21 @@ class RouteTests(unittest.TestCase):
             data={"log_text": "Failed password from 192.168.1.25"},
         )
         self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Failed logins", response.data)
+
+    def test_log_parser_file_upload_post(self):
+        response = self.client.post(
+            "/log-parser",
+            data={
+                "log_file": (
+                    io.BytesIO(b"Failed password from 192.168.1.25"),
+                    "sample-auth.log",
+                ),
+            },
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Source file: sample-auth.log", response.data)
         self.assertIn(b"Failed logins", response.data)
 
     def test_port_scanner_requires_permission(self):
