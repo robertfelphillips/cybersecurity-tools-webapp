@@ -48,7 +48,8 @@ README.md
 Windows PowerShell:
 
 ```powershell
-cd C:\Users\rober\OneDrive\Documents\Playground\cybersecurity-tools-webapp
+git clone https://github.com/robertfelphillips/cybersecurity-tools-webapp.git
+cd cybersecurity-tools-webapp
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -66,7 +67,8 @@ http://127.0.0.1:5000
 Use this to confirm the app runs through Gunicorn before using Nginx:
 
 ```bash
-cd /mnt/c/Users/rober/OneDrive/Documents/Playground/cybersecurity-tools-webapp
+git clone https://github.com/robertfelphillips/cybersecurity-tools-webapp.git
+cd cybersecurity-tools-webapp
 python3 -m venv .venv-linux
 . .venv-linux/bin/activate
 pip install -r requirements.txt
@@ -92,7 +94,7 @@ sudo apt install -y nginx
 Start Gunicorn in one WSL terminal:
 
 ```bash
-cd /mnt/c/Users/rober/OneDrive/Documents/Playground/cybersecurity-tools-webapp
+cd /path/to/cybersecurity-tools-webapp
 . .venv-linux/bin/activate
 gunicorn -c deploy/gunicorn.conf.py app.app:app
 ```
@@ -100,7 +102,7 @@ gunicorn -c deploy/gunicorn.conf.py app.app:app
 In another WSL terminal, enable the local Nginx config:
 
 ```bash
-cd /mnt/c/Users/rober/OneDrive/Documents/Playground/cybersecurity-tools-webapp
+cd /path/to/cybersecurity-tools-webapp
 sudo cp deploy/nginx-wsl-local.conf /etc/nginx/sites-available/cybersecurity-tools-webapp-wsl
 sudo ln -s /etc/nginx/sites-available/cybersecurity-tools-webapp-wsl /etc/nginx/sites-enabled/
 sudo nginx -t
