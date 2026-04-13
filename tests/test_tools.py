@@ -1,4 +1,5 @@
 import io
+import os
 import socket
 import unittest
 from unittest.mock import patch
@@ -89,6 +90,12 @@ class ToolTests(unittest.TestCase):
     def test_port_scanner_rejects_large_ranges(self):
         with self.assertRaises(ValueError):
             scan_ports("127.0.0.1", "1", "101")
+
+    @patch.dict(os.environ, {"SCANNER_ALLOWED_HOSTS": "127.0.0.1,localhost,::1"})
+    @patch("app.tools.port_scanner.socket.getaddrinfo", return_value=[(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", 0))])
+    def test_port_scanner_rejects_disallowed_hosts_when_configured(self, _):
+        with self.assertRaises(ValueError):
+            scan_ports("8.8.8.8", "53", "53")
 
 
 class RouteTests(unittest.TestCase):

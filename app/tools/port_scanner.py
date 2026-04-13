@@ -1,3 +1,4 @@
+import os
 import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -12,6 +13,9 @@ def scan_ports(host: str, start_port: str, end_port: str) -> list[dict[str, str 
     if not clean_host:
         raise ValueError("Enter a host to scan.")
 
+    resolved_addresses = _resolve_host(clean_host)
+    _enforce_allowed_host(clean_host, resolved_addresses)
+
     start = _parse_port(start_port, "Start port")
     end = _parse_port(end_port, "End port")
 
@@ -21,11 +25,6 @@ def scan_ports(host: str, start_port: str, end_port: str) -> list[dict[str, str 
     port_count = end - start + 1
     if port_count > MAX_PORT_RANGE:
         raise ValueError(f"Scan range is limited to {MAX_PORT_RANGE} ports at a time.")
-
-    try:
-        socket.getaddrinfo(clean_host, None)
-    except socket.gaierror as exc:
-        raise ValueError("Host could not be resolved.") from exc
 
     ports = range(start, end + 1)
     results: list[dict[str, str | int]] = []
@@ -40,6 +39,39 @@ def scan_ports(host: str, start_port: str, end_port: str) -> list[dict[str, str 
             results.append(future.result())
 
     return sorted(results, key=lambda item: int(item["port"]))
+
+
+def _resolve_host(host: str):
+    try:
+        return socket.getaddrinfo(host, None)
+    except socket.gaierror as exc:
+        raise ValueError("Host could not be resolved.") from exc
+
+
+def _enforce_allowed_host(host: str, resolved_addresses) -> None:
+    allowed_hosts = _configured_allowed_hosts()
+    if not allowed_hosts:
+        return
+
+    candidates = {host.lower()}
+    for resolved in resolved_addresses:
+        try:
+            candidates.add(str(resolved[4][0]).lower())
+        except (IndexError, TypeError):
+            continue
+
+    if candidates.isdisjoint(allowed_hosts):
+        allowed_display = ", ".join(sorted(allowed_hosts))
+        raise ValueError(f"This deployment only allows scans for: {allowed_display}.")
+
+
+def _configured_allowed_hosts() -> set[str]:
+    raw_hosts = os.environ.get("SCANNER_ALLOWED_HOSTS", "")
+    return {
+        host.strip().lower()
+        for host in raw_hosts.split(",")
+        if host.strip()
+    }
 
 
 def _parse_port(value: str, label: str) -> int:
